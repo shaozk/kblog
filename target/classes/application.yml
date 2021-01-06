@@ -1,5 +1,10 @@
-server:
-  port: 2021
 spring:
   application:
-    name: k-blog
+    name: sob-blog
+  datasource:
+    url: jdbc:mysql://106.14.20.146:3307/kblog_system?characterEncoding=utf-8&useSSL=false
+    driver-class-name: com.mysql.jdbc.Driver
+    username: root
+    password: 123456
+server:
+  port: 8080
