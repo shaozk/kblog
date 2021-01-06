@@ -1,7 +1,5 @@
 package org.example.blog.controller;
 
-import org.example.blog.pojo.House;
-import org.example.blog.pojo.User;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -16,6 +14,7 @@ public class TestController {
         return "hello";
     }
 
+    /*
     @GetMapping("/test-json")
     public User testJson() {
         User user = new User("邵梓康",20,"男");
@@ -23,6 +22,8 @@ public class TestController {
         user.setHouse(house);
         return user;
     }
+    */
+
 
 
 }
