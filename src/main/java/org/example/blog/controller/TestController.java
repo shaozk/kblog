@@ -1,8 +1,9 @@
 package org.example.blog.controller;
 
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.example.blog.pojo.User;
+import org.example.blog.response.ResponseResult;
+import org.example.blog.response.ResponseState;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/test")
@@ -14,15 +15,19 @@ public class TestController {
         return "hello";
     }
 
-    /*
+
     @GetMapping("/test-json")
-    public User testJson() {
-        User user = new User("邵梓康",20,"男");
-        House house = new House("豪宅","湖南汨罗");
-        user.setHouse(house);
-        return user;
+    public ResponseResult testJson() {
+        return ResponseResult.SUCCESS().setData("hello");
     }
-    */
+
+    @PostMapping("test-login")
+    public ResponseResult testLogin(@RequestBody User user) {
+        System.out.println(user.toString());
+        ResponseResult loginSuccess = new ResponseResult(ResponseState.LOGIN_SUCCESS);
+        return loginSuccess.setData("登录成功");
+    }
+
 
 
 

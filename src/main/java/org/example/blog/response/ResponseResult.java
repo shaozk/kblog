@@ -6,9 +6,32 @@ public class ResponseResult {
     private String message;
     private Object data;
 
+    public ResponseResult(ResponseState responseState) {
+        this.success = responseState.isSuccess();
+        this.code = responseState.getCode();
+        this.message = responseState.getMessage();
+    }
+
+    public static ResponseResult SUCCESS() {
+        return new ResponseResult(ResponseState.SUCCESS);
+    }
+
+    public static ResponseResult SUCCESS(String message) {
+        ResponseResult responseResult = new ResponseResult(ResponseState.SUCCESS);
+        responseResult.setMessage(message);
+        return responseResult;
+    }
+
+    public static ResponseResult FAILED() {
+        return new ResponseResult(ResponseState.FAILED);
+    }
+
+
     public boolean isSuccess() {
         return success;
     }
+
+
 
     public void setSuccess(boolean success) {
         this.success = success;
@@ -30,11 +53,12 @@ public class ResponseResult {
         this.message = message;
     }
 
-    public Object getDate() {
+    public Object getDat() {
         return data;
     }
 
-    public void setData(Object data) {
+    public ResponseResult setData(Object data) {
         this.data = data;
+        return this;
     }
 }
