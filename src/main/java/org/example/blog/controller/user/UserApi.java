@@ -4,12 +4,19 @@ package org.example.blog.controller.user;
 import lombok.extern.slf4j.Slf4j;
 import org.example.blog.pojo.User;
 import org.example.blog.response.ResponseResult;
+import org.example.blog.services.IUserService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+
+import javax.servlet.http.HttpServletRequest;
 
 @Slf4j
 @RestController
 @RequestMapping("/user")
 public class UserApi {
+
+    @Autowired
+    private IUserService userService;
 
     /**
      * 初始化管理员账号-init-admin
@@ -18,11 +25,11 @@ public class UserApi {
      * @return
      */
     @PostMapping("/admin-account")
-    public ResponseResult initManagerAccount(@RequestBody User user) {
+    public ResponseResult initManagerAccount(@RequestBody User user, HttpServletRequest request) {
         log.info("user name ==> " + user.getUserName());
         log.info("password ==> " + user.getPassword());
         log.info("email ==> " + user.getEmail());
-        return ResponseResult.SUCCESS();
+        return userService.initManagerAccount(user, request);
     }
 
     /**

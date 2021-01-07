@@ -4,21 +4,22 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.Table;
+import java.util.Date;
 
 @Entity
 @Table(name = "tb_Settings")
-public class Settings {
+public class Setting {
 
   	@Id
 	private String id;
-  	@Column(name = "key")
+  	@Column(name = "`key`")
 	private String key;
-  	@Column(name = "value")
+  	@Column(name = "`value`")
 	private String value;
   	@Column(name = "create_time")
-	private java.sql.Timestamp createTime;
+	private Date createTime;
   	@Column(name = "update_time")
-	private java.sql.Timestamp updateTime;
+	private Date updateTime;
 
 
 	public String getId() {
@@ -48,20 +49,20 @@ public class Settings {
  	}
 
 
-	public java.sql.Timestamp getCreateTime() {
+	public Date getCreateTime() {
 		return createTime;
 	}
 
- 	public void setCreateTime(java.sql.Timestamp createTime) {
+ 	public void setCreateTime(Date createTime) {
  		this.createTime = createTime;
  	}
 
 
-	public java.sql.Timestamp getUpdateTime() {
+	public Date getUpdateTime() {
 		return updateTime;
 	}
 
- 	public void setUpdateTime(java.sql.Timestamp updateTime) {
+ 	public void setUpdateTime(Date updateTime) {
  		this.updateTime = updateTime;
  	}
 
