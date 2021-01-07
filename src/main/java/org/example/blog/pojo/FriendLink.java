@@ -6,21 +6,21 @@ import javax.persistence.Id;
 import javax.persistence.Table;
 
 @Entity
-@Table(name = "tb_Categories")
-public class Categories {
+@Table(name = "tb_Friends")
+public class FriendLink {
 
   	@Id
 	private String id;
   	@Column(name = "name")
 	private String name;
-  	@Column(name = "pinyin")
-	private String pinyin;
-  	@Column(name = "description")
-	private String description;
+  	@Column(name = "logo")
+	private String logo;
+  	@Column(name = "url")
+	private String url;
   	@Column(name = "order")
 	private long order;
-  	@Column(name = "status")
-	private String status;
+  	@Column(name = "state")
+	private String state;
   	@Column(name = "create_time")
 	private java.sql.Timestamp createTime;
   	@Column(name = "update_time")
@@ -45,21 +45,21 @@ public class Categories {
  	}
 
 
-	public String getPinyin() {
-		return pinyin;
+	public String getLogo() {
+		return logo;
 	}
 
- 	public void setPinyin(String pinyin) {
- 		this.pinyin = pinyin;
+ 	public void setLogo(String logo) {
+ 		this.logo = logo;
  	}
 
 
-	public String getDescription() {
-		return description;
+	public String getUrl() {
+		return url;
 	}
 
- 	public void setDescription(String description) {
- 		this.description = description;
+ 	public void setUrl(String url) {
+ 		this.url = url;
  	}
 
 
@@ -72,12 +72,12 @@ public class Categories {
  	}
 
 
-	public String getStatus() {
-		return status;
+	public String getState() {
+		return state;
 	}
 
- 	public void setStatus(String status) {
- 		this.status = status;
+ 	public void setState(String state) {
+ 		this.state = state;
  	}
 
 
