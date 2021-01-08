@@ -9,6 +9,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import springfox.documentation.swagger2.annotations.EnableSwagger2;
 
+import java.util.Random;
+
 @Slf4j
 @EnableSwagger2
 @SpringBootApplication
@@ -32,5 +34,10 @@ public class BlogApplication {
     @Bean
     public RedisUtil createRedisUtil() {
         return new RedisUtil();
+    }
+
+    @Bean
+    public Random createRandom() {
+        return new Random();
     }
 }
