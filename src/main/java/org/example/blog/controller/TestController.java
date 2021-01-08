@@ -8,7 +8,9 @@ import org.example.blog.pojo.Labels;
 import org.example.blog.pojo.User;
 import org.example.blog.response.ResponseResult;
 import org.example.blog.response.ResponseState;
+import org.example.blog.utils.Constants;
 import org.example.blog.utils.IdWorker;
+import org.example.blog.utils.RedisUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -30,9 +32,15 @@ public class TestController {
     @Autowired
     private IdWorker idWorker ;
 
+    @Autowired
+    private RedisUtil redisUtil;
+
+
     @GetMapping("/hello-world")
     public String helloWorld() {
         log.info("hello,world");
+        String captchaContent = (String)redisUtil.get(Constants.User.KEY_CAPTCHA_CONTENT + "123456");
+        log.info(captchaContent);
         return "hello";
     }
 
@@ -80,15 +88,15 @@ public class TestController {
         //specCaptcha.setCharType(Captcha.TYPE_ONLY_NUMBER);
         specCaptcha.setCharType(Captcha.TYPE_DEFAULT);
 
+        String content = specCaptcha.text().toLowerCase();
         // 验证码存入session
-        request.getSession().setAttribute("captcha", specCaptcha.text().toLowerCase());
+        // request.getSession().setAttribute("captcha", content);
+        // 保存到redis里，十分钟有效
+        redisUtil.set(Constants.User.KEY_CAPTCHA_CONTENT + "123456", content, 60 *10);
 
         // 输出图片流
         specCaptcha.out(response.getOutputStream());
     }
-
-
-
 
 
 }

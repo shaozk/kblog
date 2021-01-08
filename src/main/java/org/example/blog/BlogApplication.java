@@ -2,6 +2,7 @@ package org.example.blog;
 
 import lombok.extern.slf4j.Slf4j;
 import org.example.blog.utils.IdWorker;
+import org.example.blog.utils.RedisUtil;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
@@ -26,5 +27,10 @@ public class BlogApplication {
     @Bean
     public BCryptPasswordEncoder createPasswordEncoder() {
         return new BCryptPasswordEncoder();
+    }
+
+    @Bean
+    public RedisUtil createRedisUtil() {
+        return new RedisUtil();
     }
 }
