@@ -45,6 +45,10 @@ public class UserServiceImpl implements IUserService {
     @Autowired
     private RedisUtil redisUtil;
 
+    @Autowired
+    private TaskService taskService;
+
+
     public static final int[] captcha_font_types = {
             Captcha.FONT_1,
             Captcha.FONT_2,
@@ -187,7 +191,7 @@ public class UserServiceImpl implements IUserService {
         log.info("code ==> " + code);
         // 3.发送验证码,6位数，100000~999999
         try {
-            EmailSender.sendRegisterVerifyCode(String.valueOf(code), emailAddress);
+            taskService.sendEmailVerifyCode(String.valueOf(code), emailAddress);
         } catch (Exception e) {
             return ResponseResult.FAILED("验证码发送失败，请稍后重发");
         }
@@ -202,7 +206,6 @@ public class UserServiceImpl implements IUserService {
         // 保存code，十分钟内有效
         redisUtil.set(Constants.User.KEY_EMAIL_CONTENT, String.valueOf(code), 60 * 10);
         return ResponseResult.SUCCESS("验证码发送成功");
-
     }
 
 
