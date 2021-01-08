@@ -24,4 +24,11 @@ public interface IUserService {
      */
     void createCaptcha(HttpServletResponse response, String captchaKey) throws Exception;
 
+    /**
+     * 发送邮件email
+     * @param request
+     * @param emailAddress
+     * @return
+     */
+    ResponseResult sendEmail(HttpServletRequest request, String emailAddress);
 }

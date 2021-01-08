@@ -6,6 +6,10 @@ public interface Constants {
         String DEFAULT_AVATAR = "https://cdn.sunofbeaches.com/images/default_avatar.png";
         String DEFAULT_STATE = "1";
         String KEY_CAPTCHA_CONTENT = "key_captcha_content_";
+        String KEY_EMAIL_CONTENT = "key_email_content_";
+        String KEY_EMAIL_SEND_IP = "key_email_send_ip";
+        String KEY_EMAIL_SEND_ADDRESS = "key_email_send_adress";
+
     }
 
     interface Setting {

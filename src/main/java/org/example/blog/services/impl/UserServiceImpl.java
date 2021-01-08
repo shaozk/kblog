@@ -11,10 +11,7 @@ import org.example.blog.pojo.Setting;
 import org.example.blog.pojo.User;
 import org.example.blog.response.ResponseResult;
 import org.example.blog.services.IUserService;
-import org.example.blog.utils.Constants;
-import org.example.blog.utils.IdWorker;
-import org.example.blog.utils.RedisUtil;
-import org.example.blog.utils.TextUtil;
+import org.example.blog.utils.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -153,6 +150,58 @@ public class UserServiceImpl implements IUserService {
         redisUtil.set(Constants.User.KEY_CAPTCHA_CONTENT + key, content, 60 * 10);
         targetCaptcha.out(response.getOutputStream());
 
+
+    }
+
+    @Override
+    public ResponseResult sendEmail(HttpServletRequest request, String emailAddress) {
+        // 1.防止不断发送
+        // 同一个邮箱，间隔要超过30秒，同一个ip1小时内最多只能发10次（如果时短信，最多5次）
+        String remoteAddr =request.getRemoteAddr();
+        log.info("sendEmail ==> " + remoteAddr);
+        if (remoteAddr != null) {
+            remoteAddr = remoteAddr.replaceAll(":","_");
+        }
+        // 拿出来，如果没有，那就过了
+        log.info("remoteAddr ==> " + Constants.User.KEY_EMAIL_SEND_IP + remoteAddr);
+        Integer ipSendTime = (Integer) redisUtil.get(Constants.User.KEY_EMAIL_SEND_IP + remoteAddr);
+        if(ipSendTime != null && ipSendTime > 10) {
+            return ResponseResult.FAILED("您发送验证码太频繁了！");
+        }
+        Object hasEmailSend = redisUtil.get(Constants.User.KEY_EMAIL_SEND_ADDRESS + emailAddress);
+        if (hasEmailSend != null) {
+            return ResponseResult.FAILED("你发送验证码也太频繁了吧！");
+        }
+
+        // 2.检查邮箱地址是否正确
+        boolean isEmailFormatOk = TextUtil.isEmailAddressOk(emailAddress);
+        if (!isEmailFormatOk) {
+            return ResponseResult.FAILED("邮箱格式不正确");
+        }
+
+        // 0 ~ 999999
+        int code = random.nextInt(999999);
+        if(code < 100000) {
+            code += 100000;
+        }
+        log.info("code ==> " + code);
+        // 3.发送验证码,6位数，100000~999999
+        try {
+            EmailSender.sendRegisterVerifyCode(String.valueOf(code), emailAddress);
+        } catch (Exception e) {
+            return ResponseResult.FAILED("验证码发送失败，请稍后重发");
+        }
+        // 4.做记录
+        if (ipSendTime == null) {
+            ipSendTime = 0;
+        }
+        ipSendTime++;
+        // 1个小时有效期
+        redisUtil.set(Constants.User.KEY_EMAIL_SEND_IP + remoteAddr, ipSendTime, 60 * 60);
+        redisUtil.set(Constants.User.KEY_EMAIL_SEND_ADDRESS + emailAddress, true, 30);
+        // 保存code，十分钟内有效
+        redisUtil.set(Constants.User.KEY_EMAIL_CONTENT, String.valueOf(code), 60 * 10);
+        return ResponseResult.SUCCESS("验证码发送成功");
 
     }
 

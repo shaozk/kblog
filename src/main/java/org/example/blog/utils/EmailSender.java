@@ -300,6 +300,14 @@ public class EmailSender {
         bodyPart.setContent(html, "text/html; charset=utf-8");
         return bodyPart;
     }
+
+    public static void sendRegisterVerifyCode(String code, String address) throws Exception {
+        EmailSender.subject("KBlog博客系统注册验证码")
+                .from("KBlog博客系统")
+                .text("您的验证码是： " + code + " ,有效期为10分钟")
+                .to(address)
+                .send();
+    }
 }
 
 
