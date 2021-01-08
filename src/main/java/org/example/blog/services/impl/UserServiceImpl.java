@@ -11,6 +11,7 @@ import org.example.blog.utils.Constants;
 import org.example.blog.utils.IdWorker;
 import org.example.blog.utils.TextUtil;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import javax.servlet.http.HttpServletRequest;
@@ -30,6 +31,9 @@ public class UserServiceImpl implements IUserService {
 
     @Autowired
     private SettingDao settingDao;
+
+    @Autowired
+    private BCryptPasswordEncoder bCryptPasswordEncoder;
 
     @Override
     public ResponseResult initManagerAccount(User user, HttpServletRequest request) {
@@ -64,6 +68,11 @@ public class UserServiceImpl implements IUserService {
         user.setRegIp(remoteAddr);
         user.setCreateTime(new Date());
         user.setUpdateTime(new Date());
+
+        // 对密码进行加密
+        String password = user.getPassword();
+        String encode = bCryptPasswordEncoder.encode(password);
+        user.setPassword(encode);
 
         // 保存到数据库
         userDao.save(user);
