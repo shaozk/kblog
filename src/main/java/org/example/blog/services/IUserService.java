@@ -49,4 +49,15 @@ public interface IUserService {
      * @return
      */
     ResponseResult register(User user, String emailCode, String captchaCode, String captchaKey, HttpServletRequest request);
+
+    /**
+     * 用户登陆
+     * @param captcha
+     * @param captchaKey
+     * @param user
+     * @param request
+     * @param response
+     * @return
+     */
+    ResponseResult doLogin(String captcha, String captchaKey, User user, HttpServletRequest request, HttpServletResponse response);
 }

@@ -14,7 +14,7 @@ public class JwtUtil {
     private static String key = "f4d038ec31de642f5f99759377df7909";
 
     //单位是毫秒
-    private static long ttl = Constants.TimeValueInMillions.HOUR_2;//2个小时
+    private static long ttl = Constants.TimeValueInMillions.HOUR_3;//3个小时
 //
     public String getKey() {
         return key;

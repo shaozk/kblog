@@ -16,11 +16,15 @@ import org.example.blog.utils.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.util.DigestUtils;
 
+import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.transaction.Transactional;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Random;
 
 @Slf4j
@@ -65,7 +69,8 @@ public class UserServiceImpl implements IUserService {
 
 
     @Override
-    public ResponseResult initManagerAccount(User user, HttpServletRequest request) {
+    public ResponseResult initManagerAccount(User user,
+                                             HttpServletRequest request) {
 
         // 检查是否有初始化
         Setting managerAccountState = settingDao.findOneByKey(Constants.Setting.HAS_MANAGER_ACCOUNT_STATE);
@@ -118,7 +123,8 @@ public class UserServiceImpl implements IUserService {
     }
 
     @Override
-    public void createCaptcha(HttpServletResponse response, String captchaKey) throws Exception{
+    public void createCaptcha(HttpServletResponse response,
+                              String captchaKey) throws Exception{
         if(TextUtil.isEmpty(captchaKey) || captchaKey.length() < 13) {
             return;
         }
@@ -159,7 +165,9 @@ public class UserServiceImpl implements IUserService {
     }
 
     @Override
-    public ResponseResult sendEmail(String type, HttpServletRequest request, String emailAddress) {
+    public ResponseResult sendEmail(String type,
+                                    HttpServletRequest request,
+                                    String emailAddress) {
         if (emailAddress == null) {
             return ResponseResult.FAILED("邮箱地址不能为空");
         }
@@ -225,7 +233,11 @@ public class UserServiceImpl implements IUserService {
     }
 
     @Override
-    public ResponseResult register(User user, String emailCode, String captchaCode, String captchaKey, HttpServletRequest request) {
+    public ResponseResult register(User user,
+                                   String emailCode,
+                                   String captchaCode,
+                                   String captchaKey,
+                                   HttpServletRequest request) {
         // 1.检查当前用户名是否已经注册
         String userName = user.getUserName();
         if (TextUtil.isEmpty(userName)) {
@@ -309,6 +321,75 @@ public class UserServiceImpl implements IUserService {
 
          */
 
+    }
+
+    @Override
+    public ResponseResult doLogin(String captcha,
+                                  String captchaKey,
+                                  User user,
+                                  HttpServletRequest request,
+                                  HttpServletResponse response) {
+        String captchaValue = (String) redisUtil.get(Constants.User.KEY_CAPTCHA_CONTENT + captchaKey);
+        if (!captcha.equals(captchaValue)) {
+            return ResponseResult.FAILED("人类验证码不正确");
+        }
+        // 有可能是邮箱，也有可能是用户名
+        String userName = user.getUserName();
+        if (TextUtil.isEmpty(userName)) {
+            return ResponseResult.FAILED("账号不能为空");
+        }
+        String password = user.getPassword();
+        if (TextUtil.isEmpty(password)) {
+            return ResponseResult.FAILED("密码不可以为空");
+        }
+
+        User userFromDb = userDao.findOneByUserName(userName);
+        if (userFromDb == null) {
+            userFromDb = userDao.findOneByEmail(userName);
+        }
+        if (userFromDb == null) {
+            return ResponseResult.FAILED("用户名或密码不正确");
+        }
+        // 用户存在，对比密码
+        boolean matches = bCryptPasswordEncoder.matches(password, userFromDb.getPassword());
+        if (!matches) {
+            return ResponseResult.FAILED("用户名或密码不正确");
+        }
+        // 密码是正确的
+        // 判断用户状态，如果是非正常状态，则返回结果
+        if (!"1".equals(userFromDb.getState())) {
+            return ResponseResult.FAILED("当前账号已被禁止");
+        }
+        // 生成token
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("id", userFromDb.getId());
+        claims.put("user_name", userFromDb.getUserName());
+        claims.put("roles", userFromDb.getRoles());
+        claims.put("avatar", userFromDb.getAvatar());
+        claims.put("email", userFromDb.getEmail());
+        claims.put("sign", userFromDb.getSign());
+        // token默认有效3小时
+        String token = JwtUtil.createToken(claims);
+        // 返回token的Md5码，token保存在redis里
+        // 前端访问的时候，携带token的md5key，从redis中获取即可
+        String tokenKey = DigestUtils.md5DigestAsHex(token.getBytes());
+        // 保存token到redis里，有效期为2小时，key是tokenKey
+        redisUtil.set(Constants.User.KEY_TOKEN + tokenKey, token, 60 * 60 * 3);
+        // 把tokenKey写到cookies里
+        Cookie cookie = new Cookie("kblog_token", tokenKey);
+        // 这个要动态获取，可以从request里获取
+        cookie.setDomain("localhost");
+        cookie.setMaxAge(60*60*24*365);
+        cookie.setPath("/");
+        response.addCookie(cookie);
+        // todo:生成refreshToken
+
+
+
+        // 生成token
+
+
+        return ResponseResult.SUCCESS("登陆成功");
     }
 
 
