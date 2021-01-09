@@ -1,6 +1,12 @@
 package org.example.blog.utils;
 
 public interface Constants {
+    interface TimeValueInMillions {
+        int HOUR_1 = 60 * 1000; // 1小时
+        int HOUR_2 = 2 * 60 * 1000; // 2小时
+        int HOUR_3 = 3 * 60 * 1000; // 3小时（默认）
+    }
+
     interface User {
         String ROLE_ADMIN = "role_admin";
         String ROLE_NORMAL = "role_normal";
