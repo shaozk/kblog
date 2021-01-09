@@ -26,9 +26,27 @@ public interface IUserService {
 
     /**
      * 发送邮件email
+     *
+     * 使用场景：注册、找回密码、修改邮箱（会输入新的邮箱）
+     * 注册（register）：如果已经注册过了，提示该邮箱已经住注册
+     * 找回密码（forget）：如果没有注册过，提示该邮箱没有注册
+     * 修改邮箱（update）（新的邮箱）：如果已经注册了，提示该邮箱已经注册过了
+     *
+     * @param type
      * @param request
      * @param emailAddress
      * @return
      */
-    ResponseResult sendEmail(HttpServletRequest request, String emailAddress);
+    ResponseResult sendEmail(String type, HttpServletRequest request, String emailAddress);
+
+    /**
+     * 用户注册
+     * @param user
+     * @param emailCode
+     * @param captchaCode
+     * @param captchaKey
+     * @param request
+     * @return
+     */
+    ResponseResult register(User user, String emailCode, String captchaCode, String captchaKey, HttpServletRequest request);
 }

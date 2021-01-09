@@ -3,6 +3,7 @@ package org.example.blog.response;
 public enum ResponseState {
     SUCCESS(true, 200, "操作成功"),
     FAILED(false, 400, "操作失败"),
+    JOIN_IN_SUCCESS(true, 202, "注册成功"),
     GET_RESOURCE_FAILED(false, 401, "获取资源失败"),
     LOGIN_SUCCESS(true, 201, "登录成功"),
     LOGIN_FAILED(false, 499, "登录失败");

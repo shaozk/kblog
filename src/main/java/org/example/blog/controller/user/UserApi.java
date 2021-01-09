@@ -40,19 +40,13 @@ public class UserApi {
      * @return
      */
     @PostMapping
-    public ResponseResult register(@RequestBody User user) {
-        // todo:1.检查当前用户名是否已经注册
-        // todo:2.检查邮箱格式是否正确
-        // todo:3.检查邮箱是否已经注册
-        // todo:4.检查邮箱验证码是否正确
-        // todo:5.检查图灵验证吗是否正确
-        // 达到可以注册的条件
-        // todo:6.对密码进行加密
-        // todo:7.补全数据（注册IP,登陆IP，角色，头像，创建时间，更新时间）
-        // todo:8.保存到数据库
-        // todo:9.返回结果
+    public ResponseResult register(@RequestBody User user,
+                                   @RequestParam("email_code") String emailCode,
+                                   @RequestParam("captcha_code") String captchaCode,
+                                   @RequestParam("captcha_key") String captchaKey,
+                                   HttpServletRequest request) {
 
-        return null;
+        return userService.register(user, emailCode, captchaCode, captchaKey, request);
     }
 
     /**
@@ -75,7 +69,6 @@ public class UserApi {
      */
     @GetMapping("/captcha")
     public void getCaptcha(HttpServletResponse response, @RequestParam("captcha_key") String captchaKey) {
-
         try {
             userService.createCaptcha(response, captchaKey);
         } catch (Exception e) {
@@ -90,8 +83,10 @@ public class UserApi {
      * @return
      */
     @GetMapping("/verify_code")
-    public ResponseResult sendVerifyCode(HttpServletRequest request, @RequestParam("email") String emailAddress) {
-        return userService.sendEmail(request, emailAddress);
+    public ResponseResult sendVerifyCode(HttpServletRequest request,
+                                         @RequestParam("type") String type,
+                                         @RequestParam("email") String emailAddress) {
+        return userService.sendEmail(type, request, emailAddress);
     }
 
 

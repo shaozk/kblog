@@ -10,6 +10,7 @@ import org.example.blog.dao.UserDao;
 import org.example.blog.pojo.Setting;
 import org.example.blog.pojo.User;
 import org.example.blog.response.ResponseResult;
+import org.example.blog.response.ResponseState;
 import org.example.blog.services.IUserService;
 import org.example.blog.utils.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -158,7 +159,22 @@ public class UserServiceImpl implements IUserService {
     }
 
     @Override
-    public ResponseResult sendEmail(HttpServletRequest request, String emailAddress) {
+    public ResponseResult sendEmail(String type, HttpServletRequest request, String emailAddress) {
+        if (emailAddress == null) {
+            return ResponseResult.FAILED("邮箱地址不能为空");
+        }
+        // 根据类型查询邮箱是否存在
+        if("register".equals(type) || "update".equals(type)) {
+            User userByEmail = userDao.findOneByEmail(emailAddress);
+            if (userByEmail != null) {
+                return ResponseResult.FAILED("改邮箱已注册");
+            }
+        } else if("forget".equals(type)) {
+            User userByEmail = userDao.findOneByEmail(emailAddress);
+            if (userByEmail == null) {
+                return ResponseResult.FAILED("该邮箱未注册");
+            }
+        }
         // 1.防止不断发送
         // 同一个邮箱，间隔要超过30秒，同一个ip1小时内最多只能发10次（如果时短信，最多5次）
         String remoteAddr =request.getRemoteAddr();
@@ -202,10 +218,97 @@ public class UserServiceImpl implements IUserService {
         ipSendTime++;
         // 1个小时有效期
         redisUtil.set(Constants.User.KEY_EMAIL_SEND_IP + remoteAddr, ipSendTime, 60 * 60);
-        redisUtil.set(Constants.User.KEY_EMAIL_SEND_ADDRESS + emailAddress, true, 30);
+        redisUtil.set(Constants.User.KEY_EMAIL_SEND_ADDRESS + emailAddress, "send", 30);
         // 保存code，十分钟内有效
-        redisUtil.set(Constants.User.KEY_EMAIL_CONTENT, String.valueOf(code), 60 * 10);
+        redisUtil.set(Constants.User.KEY_EMAIL_CODE_CONTENT + emailAddress, String.valueOf(code), 60 * 10);
         return ResponseResult.SUCCESS("验证码发送成功");
+    }
+
+    @Override
+    public ResponseResult register(User user, String emailCode, String captchaCode, String captchaKey, HttpServletRequest request) {
+        // 1.检查当前用户名是否已经注册
+        String userName = user.getUserName();
+        if (TextUtil.isEmpty(userName)) {
+            return ResponseResult.FAILED("用户名不能为空");
+        }
+        User userByName = userDao.findOneByUserName(userName);
+        if (userByName != null) {
+            return ResponseResult.FAILED("该用户名已经注册");
+        }
+        // 2.检查邮箱格式是否正确
+        String email = user.getEmail();
+        if (TextUtil.isEmpty(email)) {
+            return ResponseResult.FAILED("邮箱地址不能为空");
+        }
+        if (!TextUtil.isEmailAddressOk(email)) {
+            return ResponseResult.FAILED("邮箱格式不正确");
+        }
+        // 3.检查邮箱是否已经注册
+        User userByEmail = userDao.findOneByEmail(email);
+        if (userByEmail != null) {
+            return ResponseResult.FAILED("该邮箱地址已经注册");
+        }
+        // 4.检查邮箱验证码是否正确
+        String emailVerifyCode = (String) redisUtil.get(Constants.User.KEY_EMAIL_CODE_CONTENT + email);
+        if (TextUtil.isEmpty(emailVerifyCode)) {
+            return ResponseResult.FAILED("邮箱验证码无效");
+        }
+        if(!emailVerifyCode.equals(emailCode)) {
+            return ResponseResult.FAILED("邮箱验证码不正确");
+        } else {
+            // 正确，干掉redis的内容
+            redisUtil.del(Constants.User.KEY_EMAIL_CODE_CONTENT);
+        }
+
+        // 5.检查图灵验证吗是否正确
+        String captchaVerifyCode = (String) redisUtil.get(Constants.User.KEY_CAPTCHA_CONTENT + captchaKey);
+        if (TextUtil.isEmpty(captchaVerifyCode)) {
+            return ResponseResult.FAILED("人类验证码已过期");
+        }
+        if(!captchaVerifyCode.equals(captchaVerifyCode)) {
+            return ResponseResult.FAILED("人类验证码不正确");
+        } else {
+            redisUtil.del(Constants.User.KEY_CAPTCHA_CONTENT + captchaKey);
+        }
+        // 达到可以注册的条件
+        // 6.对密码进行加密
+        String password = user.getPassword();
+        if (TextUtil.isEmpty(password)) {
+            return ResponseResult.FAILED("密码不能为空");
+        }
+        user.setPassword(bCryptPasswordEncoder.encode(user.getPassword()));
+        // 7.补全数据（注册IP,登陆IP，角色，头像，创建时间，更新时间）
+        String ipAddress = request.getRemoteAddr();
+        user.setRegIp(ipAddress);
+        user.setLoginIp(ipAddress);
+        user.setId(idWorker.nextId() + "");
+        user.setState("1");
+        user.setUpdateTime(new Date());
+        user.setCreateTime(new Date());
+        user.setAvatar(Constants.User.DEFAULT_AVATAR);
+        user.setRoles(Constants.User.ROLE_NORMAL);
+
+        // 8.保存到数据库
+        userDao.save(user);
+
+        // 9.返回结果
+        return ResponseResult.GET(ResponseState.JOIN_IN_SUCCESS);
+
+        /*
+        注册流程：
+        1.前段获取图灵验证码
+        localhost:2021/user/captcha?captcha_key=3815825449258
+        图灵验证码：brczp
+
+        2.输入邮箱地址，获取邮箱验证码
+        localhost:2021/user/verify_code?email=913667678@qq.com&type=register
+        邮箱验证码：596035
+
+        3.注册提交（body：用户名、用户邮箱、用户密码；参数：图灵验证码的key、图灵验证码、邮箱验证码）
+        localhost:2021/user?captcha_key=3815825449258&captcha_code=brczp&email_code=596035
+
+         */
+
     }
 
 
