@@ -4,6 +4,7 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.Table;
+import java.util.Date;
 
 @Entity
 @Table(name = "tb_Comment")
@@ -24,11 +25,11 @@ public class Comment {
   	@Column(name = "user_name")
 	private String userName;
   	@Column(name = "state")
-	private String state;
+	private String state = "1";
   	@Column(name = "create_time")
-	private java.sql.Timestamp createTime;
+	private Date createTime;
   	@Column(name = "update_time")
-	private java.sql.Timestamp updateTime;
+	private Date updateTime;
 
 
 	public String getId() {
@@ -103,21 +104,19 @@ public class Comment {
  	}
 
 
-	public java.sql.Timestamp getCreateTime() {
+	public Date getCreateTime() {
 		return createTime;
 	}
 
- 	public void setCreateTime(java.sql.Timestamp createTime) {
- 		this.createTime = createTime;
- 	}
+	public void setCreateTime(Date createTime) {
+		this.createTime = createTime;
+	}
 
-
-	public java.sql.Timestamp getUpdateTime() {
+	public Date getUpdateTime() {
 		return updateTime;
 	}
 
- 	public void setUpdateTime(java.sql.Timestamp updateTime) {
- 		this.updateTime = updateTime;
- 	}
-
+	public void setUpdateTime(Date updateTime) {
+		this.updateTime = updateTime;
+	}
 }

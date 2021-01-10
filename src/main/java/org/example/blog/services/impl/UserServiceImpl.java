@@ -18,7 +18,6 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.DigestUtils;
 
-import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.transaction.Transactional;
@@ -376,15 +375,9 @@ public class UserServiceImpl implements IUserService {
         // 保存token到redis里，有效期为2小时，key是tokenKey
         redisUtil.set(Constants.User.KEY_TOKEN + tokenKey, token, 60 * 60 * 3);
         // 把tokenKey写到cookies里
-        Cookie cookie = new Cookie("kblog_token", tokenKey);
         // 这个要动态获取，可以从request里获取
-        cookie.setDomain("localhost");
-        cookie.setMaxAge(60*60*24*365);
-        cookie.setPath("/");
-        response.addCookie(cookie);
+        CookieUtil.setUpCookie(response, Constants.User.COOKIE_KEY_TOKEN, tokenKey);
         // todo:生成refreshToken
-
-
 
         // 生成token
 
