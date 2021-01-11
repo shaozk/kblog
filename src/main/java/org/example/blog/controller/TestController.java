@@ -2,7 +2,6 @@ package org.example.blog.controller;
 
 import com.wf.captcha.SpecCaptcha;
 import com.wf.captcha.base.Captcha;
-import io.jsonwebtoken.Claims;
 import lombok.extern.slf4j.Slf4j;
 import org.example.blog.dao.CommentDao;
 import org.example.blog.dao.LabelDao;
@@ -11,6 +10,7 @@ import org.example.blog.pojo.Labels;
 import org.example.blog.pojo.User;
 import org.example.blog.response.ResponseResult;
 import org.example.blog.response.ResponseState;
+import org.example.blog.services.IUserService;
 import org.example.blog.utils.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -38,6 +38,10 @@ public class TestController {
 
     @Autowired
     private CommentDao commentDao;
+
+    @Autowired
+    private IUserService userService;
+
 
     @GetMapping("/hello-world")
     public String helloWorld() {
@@ -74,8 +78,6 @@ public class TestController {
         return ResponseResult.SUCCESS("测试标签添加成功");
     }
 
-
-
     // 测试图灵验证码
     @RequestMapping("/captcha")
     public void captcha(HttpServletRequest request, HttpServletResponse response) throws Exception {
@@ -105,37 +107,26 @@ public class TestController {
 
 
     @RequestMapping("/comment")
-    public ResponseResult testComment(@RequestBody Comment comment, HttpServletRequest request) {
+    public ResponseResult testComment(@RequestBody Comment comment, HttpServletRequest request, HttpServletResponse response) {
         String content = comment.getContent();
-        log.info("comment content ==>  " + content);
+        log.info("评论内容 ==>  " + content);
         // 还得直到谁评论，对这个评论进行身份确定
         String tokenKey = CookieUtil.getCookie(request, Constants.User.COOKIE_KEY_TOKEN);
+        log.info("token_key ==> " +tokenKey);
         if (tokenKey == null) {
             return ResponseResult.FAILED("账号未登录");
         }
-
         String token = (String) redisUtil.get(Constants.User.KEY_TOKEN + tokenKey);
+        log.info("token ==> " + token);
         if (token == null) {
-            // 空的话就是过期了，但是有可能的呢牢固过了，可以去查看refreshToken
-            // todo:查看refreshToken
-            // 如果refreshToken不存在，或者已经过期
-            // 告诉用户
-
+            return ResponseResult.FAILED("账号未登录");
         }
-
-        //
-
-        // 已经登陆过了
-        Claims claims = null;
-        try {
-            claims = JwtUtil.parseJWT(token);
-
-        } catch (Exception e ){
+        User user = userService.checkUser(request, response);
+        log.info("用户信息 ==> " + user.toString());
+        if (user == null) {
             return ResponseResult.FAILED("账号未登录");
         }
 
-        // 解析token
-        User user = ClaimsUtil.claims2User(claims);
         comment.setId(idWorker.nextId() + "");
         comment.setUserId(user.getId());
         comment.setUserName(user.getUserName());

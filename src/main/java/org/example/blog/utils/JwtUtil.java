@@ -1,5 +1,6 @@
 package org.example.blog.utils;
 
+
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtBuilder;
 import io.jsonwebtoken.Jwts;
@@ -11,11 +12,11 @@ import java.util.Map;
 public class JwtUtil {
 
     //盐值
-    private static String key = "f4d038ec31de642f5f99759377df7909";
+    private static String key = "1296cc078bf6035c2992ebbeede17a5d";
 
     //单位是毫秒
     private static long ttl = Constants.TimeValueInMillions.HOUR_3;//3个小时
-//
+
     public String getKey() {
         return key;
     }

@@ -1,11 +1,15 @@
 package org.example.blog.utils;
 
+
 import io.jsonwebtoken.Claims;
+import lombok.extern.slf4j.Slf4j;
 import org.example.blog.pojo.User;
 
 import java.util.HashMap;
 import java.util.Map;
 
+
+@Slf4j
 public class ClaimsUtil {
     public static final String ID = "id";
     public static final String USER_NAME = "user_name";
@@ -36,11 +40,11 @@ public class ClaimsUtil {
           String sign = (String) claims.get(SIGN);
 
           user.setId(id);
-          user.setId(userName);
-          user.setId(roles);
-          user.setId(avatar);
-          user.setId(email);
-          user.setId(sign);
+          user.setUserName(userName);
+          user.setRoles(roles);
+          user.setAvatar(avatar);
+          user.setEmail(email);
+          user.setSign(sign);
 
           return user;
     }

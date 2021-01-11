@@ -62,6 +62,14 @@ public interface IUserService {
     ResponseResult doLogin(String captcha, String captchaKey, User user, HttpServletRequest request, HttpServletResponse response);
 
     /**
+     * 检查用户是否有登陆
+     * @param request
+     * @param response
+     * @return
+     */
+    User checkUser(HttpServletRequest request, HttpServletResponse response);
+
+    /**
      * 获取用户信息
      * @param userId
      * @return

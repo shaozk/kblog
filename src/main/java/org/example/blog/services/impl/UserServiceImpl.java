@@ -5,9 +5,12 @@ import com.wf.captcha.ArithmeticCaptcha;
 import com.wf.captcha.GifCaptcha;
 import com.wf.captcha.SpecCaptcha;
 import com.wf.captcha.base.Captcha;
+import io.jsonwebtoken.Claims;
 import lombok.extern.slf4j.Slf4j;
+import org.example.blog.dao.RefreshTokenDao;
 import org.example.blog.dao.SettingDao;
 import org.example.blog.dao.UserDao;
+import org.example.blog.pojo.RefreshToken;
 import org.example.blog.pojo.Setting;
 import org.example.blog.pojo.User;
 import org.example.blog.response.ResponseResult;
@@ -54,6 +57,9 @@ public class UserServiceImpl implements IUserService {
 
     @Autowired
     private Gson gson;
+
+    @Autowired
+    private RefreshTokenDao refreshTokenDao;
 
 
     public static final int[] captcha_font_types = {
@@ -152,11 +158,10 @@ public class UserServiceImpl implements IUserService {
             targetCaptcha.setLen(2);    // 两位数运算
         }
         int index = random.nextInt(captcha_font_types.length);
-        log.info("captcha ==> " + index);
         targetCaptcha.setFont(captcha_font_types[index]);
         targetCaptcha.setCharType(Captcha.TYPE_DEFAULT);
         String content = targetCaptcha.text().toLowerCase();
-        log.info("captcha content ==> " + content);
+        log.info("人类验证码 ==> " + content);
         // 保存到redis
         redisUtil.set(Constants.User.KEY_CAPTCHA_CONTENT + key, content, 60 * 10);
         targetCaptcha.out(response.getOutputStream());
@@ -350,6 +355,20 @@ public class UserServiceImpl implements IUserService {
         if (!"1".equals(userFromDb.getState())) {
             return ResponseResult.FAILED("当前账号已被禁止");
         }
+        createToken(response, userFromDb);
+
+        return ResponseResult.SUCCESS("登陆成功");
+    }
+
+    /**
+     *
+     * @param response
+     * @param userFromDb
+     * @return token_key
+     */
+    private String createToken(HttpServletResponse response, User userFromDb) {
+        int deleteResult = refreshTokenDao.deleteAllByUserId(userFromDb.getId());
+        log.info("deleteResult --> " + deleteResult);
         // 生成token
         Map<String, Object> claims = ClaimsUtil.user2Claims(userFromDb);
         // token默认有效3小时
@@ -367,12 +386,66 @@ public class UserServiceImpl implements IUserService {
         CookieUtil.setUpCookie(response, Constants.User.COOKIE_KEY_TOKEN, tokenKey);
 
         // 生成refreshToken,保存一个月
-        JwtUtil.createRefreshToken(userFromDb.getId(), Constants.TimeValue.MONTH);
+        String refreshTokenValue = JwtUtil.createRefreshToken(userFromDb.getId(), Constants.TimeValue.MONTH);
 
         // 保存在数据库里
+        RefreshToken refreshToken = new RefreshToken();
+        refreshToken.setId(idWorker.nextId() + "");
+        refreshToken.setRefreshToken(refreshTokenValue);
+        refreshToken.setUserId(userFromDb.getId());
+        refreshToken.setTokenKey(tokenKey);
+        refreshToken.setCreateTime(new Date());
+        refreshToken.setUpdateTime(new Date());
+        refreshTokenDao.save(refreshToken);
+        return tokenKey;
+    }
 
-        // 生成token
-        return ResponseResult.SUCCESS("登陆成功");
+    private User parseByTokenKey(String tokenKey){
+        String token = (String) redisUtil.get(Constants.User.KEY_TOKEN + tokenKey);
+        if (tokenKey != null) {
+            try {
+                Claims claims = JwtUtil.parseJWT(token);
+                return ClaimsUtil.claims2User(claims);
+            } catch (Exception e) {
+                return null;
+            }
+        }
+        return null;
+    }
+
+    @Override
+    public User checkUser(HttpServletRequest request, HttpServletResponse response) {
+        // 拿到token_key
+        String tokenKey = CookieUtil.getCookie(request, Constants.User.COOKIE_KEY_TOKEN);
+        User user = parseByTokenKey(tokenKey);
+        if (user == null) {
+            // 解析出错
+            // 1.去mysql查询refreshToken
+            RefreshToken refreshToken = refreshTokenDao.findOneByTokenKey(tokenKey);
+            // 2.如果不存在，就是当前访问没有登陆
+            if (refreshToken == null) {
+                return null;
+            }
+            // 3.如果存在，就解析refreshToken
+            try {
+                JwtUtil.parseJWT(refreshToken.getRefreshToken());
+                // 5.如果refreshToken有效，创建新的token，和新的refreshToken
+                String userId = refreshToken.getUserId();
+                User userFromDb = userDao.findOneById(userId);
+                // 删掉refreshToken的记录
+                refreshTokenDao.deleteById(refreshToken.getId());
+                String newTokenKey = createToken(response, userFromDb);
+                // 返回token
+                return parseByTokenKey(newTokenKey);
+
+            }catch (Exception e1) {
+                // 4.如果refreshToken过期了，当前访问没有登陆，提示用户登陆
+                return null;
+            }
+        }
+
+        return user;
+
     }
 
     @Override
