@@ -7,7 +7,7 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 public interface UserDao extends JpaRepository<User, String>, JpaSpecificationExecutor<User> {
 
     /**
-     * 根据用户名查找用户
+     * 根据用户名查找
      *
      * @param userName
      * @return
@@ -21,4 +21,10 @@ public interface UserDao extends JpaRepository<User, String>, JpaSpecificationEx
      * @return
      */
     User findOneByEmail(String emailAddress);
+
+    /**
+     * 根据用户Id查找
+     * @param userId
+     */
+    User findOneById(String userId);
 }

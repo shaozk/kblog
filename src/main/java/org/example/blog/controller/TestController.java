@@ -135,13 +135,11 @@ public class TestController {
         }
 
         // 解析token
-        String userId = (String)claims.get("id");
-        String avatar = (String) claims.get("avatar");
-        String userName = (String) claims.get("userName");
+        User user = ClaimsUtil.claims2User(claims);
         comment.setId(idWorker.nextId() + "");
-        comment.setUserId(userId);
-        comment.setUserName(userName);
-        comment.setUserAvatar(avatar);
+        comment.setUserId(user.getId());
+        comment.setUserName(user.getUserName());
+        comment.setUserAvatar(user.getAvatar());
         comment.setCreateTime(new Date());
         comment.setUpdateTime(new Date());
         commentDao.save(comment);

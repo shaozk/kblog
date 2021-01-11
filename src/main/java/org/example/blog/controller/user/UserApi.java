@@ -50,7 +50,7 @@ public class UserApi {
     }
 
     /**
-     * 登录sign-up
+     * 用户登录
      * <p>需要提交的数据
      * 1.用户账号-可以是昵称，可以是邮箱-->做了唯一处理
      * 2.密码
@@ -97,6 +97,43 @@ public class UserApi {
                                          @RequestParam("type") String type,
                                          @RequestParam("email") String emailAddress) {
         return userService.sendEmail(type, request, emailAddress);
+    }
+
+    /**
+     * 获取用户信息
+     * @param userId
+     * @return
+     */
+    @GetMapping("/{userId}")
+    public ResponseResult getUserInfo(@PathVariable("userId") String userId) {
+        return userService.getUserInfo(userId);
+    }
+
+    /**
+     * 修改用户信息
+     * 1.头像
+     * 2.用户名
+     * 3.密码（单独修改）
+     * 4.签名
+     * 5.邮箱（单独修改）
+     * @param userId
+     * @param user
+     * @return
+     */
+    @PutMapping("/{userId}")
+    public ResponseResult updateUserInfo(@PathVariable("userId") String userId, @RequestBody User user) {
+//        return userService.updateUserInfo(userId, user);
+        return null;
+    }
+
+    /**
+     * 检查邮箱是否已经注册
+     * @param email
+     * @return SUCCESS --> 已经注册
+     */
+    @GetMapping("/email")
+    public ResponseResult checkEmail(@RequestParam("email") String email) {
+        return userService.checkEmail(email);
     }
 
 

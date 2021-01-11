@@ -1,5 +1,6 @@
 package org.example.blog;
 
+import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
 import org.example.blog.utils.IdWorker;
 import org.example.blog.utils.RedisUtil;
@@ -39,5 +40,10 @@ public class BlogApplication {
     @Bean
     public Random createRandom() {
         return new Random();
+    }
+
+    @Bean
+    public Gson createGson() {
+        return new Gson();
     }
 }

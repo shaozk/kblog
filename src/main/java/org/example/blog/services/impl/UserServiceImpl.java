@@ -1,5 +1,6 @@
 package org.example.blog.services.impl;
 
+import com.google.gson.Gson;
 import com.wf.captcha.ArithmeticCaptcha;
 import com.wf.captcha.GifCaptcha;
 import com.wf.captcha.SpecCaptcha;
@@ -22,7 +23,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.transaction.Transactional;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
 
@@ -52,6 +52,9 @@ public class UserServiceImpl implements IUserService {
     @Autowired
     private TaskService taskService;
 
+    @Autowired
+    private Gson gson;
+
 
     public static final int[] captcha_font_types = {
             Captcha.FONT_1,
@@ -68,8 +71,7 @@ public class UserServiceImpl implements IUserService {
 
 
     @Override
-    public ResponseResult initManagerAccount(User user,
-                                             HttpServletRequest request) {
+    public ResponseResult initManagerAccount(User user, HttpServletRequest request) {
 
         // 检查是否有初始化
         Setting managerAccountState = settingDao.findOneByKey(Constants.Setting.HAS_MANAGER_ACCOUNT_STATE);
@@ -122,8 +124,7 @@ public class UserServiceImpl implements IUserService {
     }
 
     @Override
-    public void createCaptcha(HttpServletResponse response,
-                              String captchaKey) throws Exception{
+    public void createCaptcha(HttpServletResponse response, String captchaKey) throws Exception{
         if(TextUtil.isEmpty(captchaKey) || captchaKey.length() < 13) {
             return;
         }
@@ -164,9 +165,7 @@ public class UserServiceImpl implements IUserService {
     }
 
     @Override
-    public ResponseResult sendEmail(String type,
-                                    HttpServletRequest request,
-                                    String emailAddress) {
+    public ResponseResult sendEmail(String type, HttpServletRequest request, String emailAddress) {
         if (emailAddress == null) {
             return ResponseResult.FAILED("邮箱地址不能为空");
         }
@@ -232,11 +231,7 @@ public class UserServiceImpl implements IUserService {
     }
 
     @Override
-    public ResponseResult register(User user,
-                                   String emailCode,
-                                   String captchaCode,
-                                   String captchaKey,
-                                   HttpServletRequest request) {
+    public ResponseResult register(User user, String emailCode, String captchaCode, String captchaKey, HttpServletRequest request) {
         // 1.检查当前用户名是否已经注册
         String userName = user.getUserName();
         if (TextUtil.isEmpty(userName)) {
@@ -323,11 +318,7 @@ public class UserServiceImpl implements IUserService {
     }
 
     @Override
-    public ResponseResult doLogin(String captcha,
-                                  String captchaKey,
-                                  User user,
-                                  HttpServletRequest request,
-                                  HttpServletResponse response) {
+    public ResponseResult doLogin(String captcha, String captchaKey, User user, HttpServletRequest request, HttpServletResponse response) {
         String captchaValue = (String) redisUtil.get(Constants.User.KEY_CAPTCHA_CONTENT + captchaKey);
         if (!captcha.equals(captchaValue)) {
             return ResponseResult.FAILED("人类验证码不正确");
@@ -360,29 +351,53 @@ public class UserServiceImpl implements IUserService {
             return ResponseResult.FAILED("当前账号已被禁止");
         }
         // 生成token
-        Map<String, Object> claims = new HashMap<>();
-        claims.put("id", userFromDb.getId());
-        claims.put("user_name", userFromDb.getUserName());
-        claims.put("roles", userFromDb.getRoles());
-        claims.put("avatar", userFromDb.getAvatar());
-        claims.put("email", userFromDb.getEmail());
-        claims.put("sign", userFromDb.getSign());
+        Map<String, Object> claims = ClaimsUtil.user2Claims(userFromDb);
         // token默认有效3小时
         String token = JwtUtil.createToken(claims);
+
         // 返回token的Md5码，token保存在redis里
         // 前端访问的时候，携带token的md5key，从redis中获取即可
         String tokenKey = DigestUtils.md5DigestAsHex(token.getBytes());
+
         // 保存token到redis里，有效期为2小时，key是tokenKey
-        redisUtil.set(Constants.User.KEY_TOKEN + tokenKey, token, 60 * 60 * 3);
+        redisUtil.set(Constants.User.KEY_TOKEN + tokenKey, token, Constants.TimeValue.HOUR_2);
+
         // 把tokenKey写到cookies里
         // 这个要动态获取，可以从request里获取
         CookieUtil.setUpCookie(response, Constants.User.COOKIE_KEY_TOKEN, tokenKey);
-        // todo:生成refreshToken
+
+        // 生成refreshToken,保存一个月
+        JwtUtil.createRefreshToken(userFromDb.getId(), Constants.TimeValue.MONTH);
+
+        // 保存在数据库里
 
         // 生成token
-
-
         return ResponseResult.SUCCESS("登陆成功");
+    }
+
+    @Override
+    public ResponseResult getUserInfo(String userId) {
+        // 从数据库获取
+        User userById = userDao.findOneById(userId);
+        // 判断结果
+        if (userById == null) {
+            return ResponseResult.FAILED("用户不存在");
+        }
+        // 复制对象，注意要清空密码及其他一些隐私信息
+        String userJson = gson.toJson(userById);
+        User newUser = gson.fromJson(userJson, User.class);
+        newUser.setPassword("");
+        newUser.setEmail("");
+        newUser.setRegIp("");
+        newUser.setLoginIp("");
+
+        // 返回结果
+        return ResponseResult.SUCCESS("获取成功").setData(userById);
+    }
+
+    @Override
+    public ResponseResult checkEmail(String email) {
+        return null;
     }
 
 

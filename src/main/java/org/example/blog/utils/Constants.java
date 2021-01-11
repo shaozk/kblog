@@ -1,6 +1,8 @@
 package org.example.blog.utils;
 
 public interface Constants {
+
+
     interface TimeValueInMillions {
         int HOUR_1 = 60 * 1000; // 1小时
         int HOUR_2 = 2 * 60 * 1000; // 2小时
@@ -24,4 +26,19 @@ public interface Constants {
         String HAS_MANAGER_ACCOUNT_STATE = "has_manager_account_state";
 
     }
+
+    /**
+     * 单位是秒
+     */
+    interface TimeValue {
+        int MIN = 60;
+        int HOUR = 60 * MIN;
+        int HOUR_2 = 2 * HOUR;
+        int DAY = 24 * HOUR;
+        int WEEK = 7 * DAY;
+        int MONTH = 30 * DAY;
+        int YEAR = 12 * MONTH;
+    }
+
+
 }

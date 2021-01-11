@@ -60,4 +60,18 @@ public interface IUserService {
      * @return
      */
     ResponseResult doLogin(String captcha, String captchaKey, User user, HttpServletRequest request, HttpServletResponse response);
+
+    /**
+     * 获取用户信息
+     * @param userId
+     * @return
+     */
+    ResponseResult getUserInfo(String userId);
+
+    /**
+     * 检查邮箱
+     * @param email
+     * @return
+     */
+    ResponseResult checkEmail(String email);
 }
