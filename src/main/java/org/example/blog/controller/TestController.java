@@ -121,7 +121,7 @@ public class TestController {
         if (token == null) {
             return ResponseResult.FAILED("账号未登录");
         }
-        User user = userService.checkUser(request, response);
+        User user = userService.checkUser();
         log.info("用户信息 ==> " + user.toString());
         if (user == null) {
             return ResponseResult.FAILED("账号未登录");

@@ -18,9 +18,15 @@ import org.example.blog.response.ResponseState;
 import org.example.blog.services.IUserService;
 import org.example.blog.utils.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.DigestUtils;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -75,6 +81,15 @@ public class UserServiceImpl implements IUserService {
             Captcha.FONT_10,
     };
 
+    private HttpServletRequest getRequest() {
+        ServletRequestAttributes requestAttributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+        return requestAttributes.getRequest();
+    }
+
+    private HttpServletResponse getResponse() {
+        ServletRequestAttributes requestAttributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+        return requestAttributes.getResponse();
+    }
 
     @Override
     public ResponseResult initManagerAccount(User user, HttpServletRequest request) {
@@ -82,7 +97,7 @@ public class UserServiceImpl implements IUserService {
         // 检查是否有初始化
         Setting managerAccountState = settingDao.findOneByKey(Constants.Setting.HAS_MANAGER_ACCOUNT_STATE);
         if (managerAccountState != null) {
-            return ResponseResult.FAILED("管理员账号已近初始化");
+            return ResponseResult.FAILED("管理员账号已经初始化");
         }
 
         // 检查数据
@@ -103,8 +118,6 @@ public class UserServiceImpl implements IUserService {
         user.setState(Constants.User.DEFAULT_STATE);
         String remoteAddr = request.getRemoteAddr();
         String localAddr = request.getLocalAddr();
-        log.info("remoteAddr == > " + remoteAddr);
-        log.info("localAddr == > " + localAddr);
         user.setLoginIp(remoteAddr);
         user.setRegIp(remoteAddr);
         user.setCreateTime(new Date());
@@ -129,6 +142,13 @@ public class UserServiceImpl implements IUserService {
         return ResponseResult.SUCCESS("初始化成功");
     }
 
+    /**
+     * 创建图灵验证码
+     * （人类验证码）
+     * @param response
+     * @param captchaKey
+     * @throws Exception
+     */
     @Override
     public void createCaptcha(HttpServletResponse response, String captchaKey) throws Exception{
         if(TextUtil.isEmpty(captchaKey) || captchaKey.length() < 13) {
@@ -161,11 +181,13 @@ public class UserServiceImpl implements IUserService {
         targetCaptcha.setFont(captcha_font_types[index]);
         targetCaptcha.setCharType(Captcha.TYPE_DEFAULT);
         String content = targetCaptcha.text().toLowerCase();
-        log.info("人类验证码 ==> " + content);
+        log.info("图灵验证码 ==> " + content);
         // 保存到redis
+        // 删除时机：
+        // 1、自然删除，也就是10分钟后自己删除
+        // 2、
         redisUtil.set(Constants.User.KEY_CAPTCHA_CONTENT + key, content, 60 * 10);
         targetCaptcha.out(response.getOutputStream());
-
 
     }
 
@@ -178,7 +200,7 @@ public class UserServiceImpl implements IUserService {
         if("register".equals(type) || "update".equals(type)) {
             User userByEmail = userDao.findOneByEmail(emailAddress);
             if (userByEmail != null) {
-                return ResponseResult.FAILED("改邮箱已注册");
+                return ResponseResult.FAILED("该邮箱已注册");
             }
         } else if("forget".equals(type)) {
             User userByEmail = userDao.findOneByEmail(emailAddress);
@@ -323,11 +345,15 @@ public class UserServiceImpl implements IUserService {
     }
 
     @Override
-    public ResponseResult doLogin(String captcha, String captchaKey, User user, HttpServletRequest request, HttpServletResponse response) {
+    public ResponseResult doLogin(String captcha, String captchaKey, User user,
+                                  HttpServletRequest request, HttpServletResponse response) {
         String captchaValue = (String) redisUtil.get(Constants.User.KEY_CAPTCHA_CONTENT + captchaKey);
         if (!captcha.equals(captchaValue)) {
             return ResponseResult.FAILED("人类验证码不正确");
         }
+        // 验证成功，删除redis里的验证码
+        redisUtil.del(Constants.User.KEY_CAPTCHA_CONTENT + captchaKey);
+
         // 有可能是邮箱，也有可能是用户名
         String userName = user.getUserName();
         if (TextUtil.isEmpty(userName)) {
@@ -414,9 +440,9 @@ public class UserServiceImpl implements IUserService {
     }
 
     @Override
-    public User checkUser(HttpServletRequest request, HttpServletResponse response) {
+    public User checkUser() {
         // 拿到token_key
-        String tokenKey = CookieUtil.getCookie(request, Constants.User.COOKIE_KEY_TOKEN);
+        String tokenKey = CookieUtil.getCookie(getRequest(), Constants.User.COOKIE_KEY_TOKEN);
         User user = parseByTokenKey(tokenKey);
         if (user == null) {
             // 解析出错
@@ -434,7 +460,7 @@ public class UserServiceImpl implements IUserService {
                 User userFromDb = userDao.findOneById(userId);
                 // 删掉refreshToken的记录
                 refreshTokenDao.deleteById(refreshToken.getId());
-                String newTokenKey = createToken(response, userFromDb);
+                String newTokenKey = createToken(getResponse(), userFromDb);
                 // 返回token
                 return parseByTokenKey(newTokenKey);
 
@@ -470,7 +496,150 @@ public class UserServiceImpl implements IUserService {
 
     @Override
     public ResponseResult checkEmail(String email) {
+        User user = userDao.findOneByEmail(email);
+        return user == null ? ResponseResult.FAILED("该邮箱未注册") : ResponseResult.SUCCESS("该邮箱已经注册");
+    }
+
+    @Override
+    public ResponseResult checkUserName(String userName) {
+        User user = userDao.findOneByUserName(userName);
+        return user == null ? ResponseResult.FAILED("该用户名未注册") : ResponseResult.SUCCESS("该用户名已经注册");
+    }
+
+    @Override
+    public ResponseResult updateUserInfo(String userId, User user) {
+        // 从token中获取，为了校验权限
+        // 只有用户才可以修改自己的信息
+        User userFromTokenKey = checkUser();
+        if (userFromTokenKey == null) {
+            return ResponseResult.ACCOUNT_NOT_LOGIN();
+        }
+        User userFromDb = userDao.findOneById(userFromTokenKey.getId());
+        log.info("当前用户ID ==> " + userFromTokenKey.getId());
+        log.info("用户ID ==> " + user.getId());
+
+        // 判断用户的ID是否一致，如果一致才可以修改
+        if (!userFromDb.getId().equals(userId)) {
+            return ResponseResult.FAILED("无权限修改");
+        }
+
+        // 可以进行修改
+        // 用户名
+        String userName = user.getUserName();
+        if (!TextUtil.isEmpty(user.getUserName())) {
+            User userByUserName = userDao.findOneByUserName(userName);
+            if (userByUserName != null) {
+                return ResponseResult.FAILED("该用户名已注册");
+            }
+            userFromDb.setUserName(userName);
+        }
+        // 头像
+        if (!TextUtil.isEmpty(user.getAvatar())) {
+            userFromDb.setAvatar(user.getAvatar());
+        }
+        // 签名，可以为空
+        userFromDb.setSign(user.getSign());
+
+        // 保存到数据库
+        userDao.save(userFromDb);
+        return ResponseResult.SUCCESS("用户信息更新成功");
+
+    }
+
+    @Override
+    public ResponseResult doLogout() {
+        // 拿到token_key,判断账号是否登录
+        String tokenKey = CookieUtil.getCookie(getRequest(), Constants.User.COOKIE_KEY_TOKEN);
+        if (TextUtil.isEmpty(tokenKey)) {
+            return ResponseResult.ACCOUNT_NOT_LOGIN();
+        }
+        // 删除redis里的token
+        redisUtil.del(Constants.User.KEY_TOKEN + tokenKey);
+        // 删除mysql里的refreshToken
+        refreshTokenDao.deleteAllByTokenKey(tokenKey);
+        // 删除cookie里的token_key
+        CookieUtil.deleteCookie(getResponse(), Constants.User.COOKIE_KEY_TOKEN);
+        return ResponseResult.SUCCESS("退出登录成功");
+    }
+
+    @Override
+    public ResponseResult updateEmail(String email, String verifyCode) {
+        // 1、确保用户已经登录了
+        User user = this.checkUser();
+        // 没有登录
+        if (user == null) {
+            return ResponseResult.ACCOUNT_NOT_LOGIN();
+        }
+        // 2、对比验证码，确保新的邮箱地址是属于当前用户的
+        String redisVerifyCode = (String) redisUtil.get(Constants.User.KEY_EMAIL_CODE_CONTENT + email);
+        if(TextUtil.isEmpty(redisVerifyCode) || !redisVerifyCode.equals(verifyCode)) {
+            return ResponseResult.FAILED("验证码错误");
+        }
+        // 验证码正确，删除验证码
+        redisUtil.del(Constants.User.KEY_EMAIL_CODE_CONTENT + email);
+        // 可以修改邮箱
+        int result = userDao.updateEmailById(email, user.getId());
+        return result > 0 ? ResponseResult.SUCCESS("邮箱修改成功") : ResponseResult.FAILED("邮箱修改失败");
+    }
+
+    @Override
+    public ResponseResult updateUserPassword(String verifyCode, User user) {
+        // 检查邮箱是否有填写
+        String email = user.getEmail();
+        if (TextUtil.isEmpty(email)) {
+            return ResponseResult.FAILED("邮箱不可以为空");
+        }
+        // 根据邮箱去redis里拿验证
+        // 进行对比
+        String redisVerifyCode = (String) redisUtil.get(Constants.User.KEY_EMAIL_CODE_CONTENT + email);
+        if (redisVerifyCode == null || !redisVerifyCode.equals(verifyCode)) {
+            return ResponseResult.FAILED("验证码错误");
+        }
+        redisUtil.del(Constants.User.KEY_EMAIL_CODE_CONTENT + email);
+        int result = userDao.updatePasswordByEmail(bCryptPasswordEncoder.encode(user.getPassword()), email);
+        // 修改密码
+        return result > 0 ? ResponseResult.SUCCESS("密码修改成功") : ResponseResult.FAILED("密码修改失败");
+
+    }
+
+    @Override
+    public ResponseResult deleteUserById(String userId) {
+        // 可以删除了
+        int result = userDao.deleteUserByState(userId);
+        if (result > 0) {
+            return ResponseResult.SUCCESS("删除成功");
+        }
+
         return null;
+    }
+
+    @Override
+    public ResponseResult listUser(int page, int size) {
+        // 检验当前操作的用户是谁
+        User curUser = checkUser();
+        if (curUser == null) {
+            return ResponseResult.ACCOUNT_NOT_LOGIN();
+        }
+        // 判断角色
+        if(!Constants.User.ROLE_ADMIN.equals(curUser.getRoles())) {
+            return ResponseResult.PERMISSION_DENIED();
+        }
+        // 可以获取用户列表
+        // 分页查询
+        if (page < Constants.Page.DEFAULT_PAGE) {
+            page = Constants.Page.DEFAULT_PAGE;
+        }
+        // size也限制一下，每一页不能少于五个
+        if(size < Constants.Page.MIN_SIZE) {
+            size = Constants.Page.MIN_SIZE;
+        }
+
+        // 根据注册日期来排序
+        Sort sort = new Sort(Sort.Direction.DESC, "createTime");
+        Pageable pageable = PageRequest.of(page - 1, size, sort);
+        Page<User> all = userDao.findAll(pageable);
+        return ResponseResult.SUCCESS("获取用户列表成功").setData(all);
+
     }
 
 

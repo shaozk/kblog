@@ -10,8 +10,6 @@ public interface IUserService {
     /**
      * 初始化管理员账号
      * @param user
-     * @param request
-     * @return
      */
     ResponseResult initManagerAccount(User user, HttpServletRequest request);
 
@@ -63,11 +61,9 @@ public interface IUserService {
 
     /**
      * 检查用户是否有登陆
-     * @param request
-     * @param response
      * @return
      */
-    User checkUser(HttpServletRequest request, HttpServletResponse response);
+    User checkUser();
 
     /**
      * 获取用户信息
@@ -82,4 +78,60 @@ public interface IUserService {
      * @return
      */
     ResponseResult checkEmail(String email);
+
+    /**
+     * 检查用户
+     * @param userName
+     * @return
+     */
+    ResponseResult checkUserName(String userName);
+
+    /**
+     * 更新用户信息
+     * @param userId
+     * @param user
+     * @return
+     */
+    ResponseResult updateUserInfo(String userId, User user);
+
+    /**
+     * 退出登录
+     * @return
+     */
+    ResponseResult doLogout();
+
+    /**
+     * 更新邮箱
+     * @param email
+     * @param verifyCode
+     * @return
+     */
+    ResponseResult updateEmail(String email, String verifyCode);
+
+    /**
+     * 更新密码
+     * @param verifyCode
+     * @param user
+     * @return
+     */
+    ResponseResult updateUserPassword(String verifyCode, User user);
+
+    /**
+     * 删除用户
+     * 并不是真的删除，而是修改状态
+     * PS：需要管理员权限
+     * @param userId
+     * @return
+     */
+    ResponseResult deleteUserById(String userId);
+
+    /**
+     * 用户列表
+     * @param page
+     * @param size
+     * @return
+     */
+    ResponseResult listUser(int page, int size);
+
+
 }

@@ -1,15 +1,19 @@
 package org.example.blog.controller.user;
 
 
+import io.swagger.annotations.ApiResponse;
+import io.swagger.annotations.ApiResponses;
 import lombok.extern.slf4j.Slf4j;
 import org.example.blog.pojo.User;
 import org.example.blog.response.ResponseResult;
 import org.example.blog.services.IUserService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 
 @Slf4j
 @RestController
@@ -20,14 +24,14 @@ public class UserApi {
     private IUserService userService;
 
     /**
-     * 初始化管理员账号-init-admin
+     * 初始化管理员账号
      *
      * @param user
      * @return
      */
-    @PostMapping("/admin-account")
+    @PostMapping("/admin_account")
     public ResponseResult initManagerAccount(@RequestBody User user, HttpServletRequest request) {
-        log.info("user name ==> " + user.getUserName());
+        log.info("userName ==> " + user.getUserName());
         log.info("password ==> " + user.getPassword());
         log.info("email ==> " + user.getEmail());
         return userService.initManagerAccount(user, request);
@@ -39,13 +43,12 @@ public class UserApi {
      * @param user
      * @return
      */
-    @PostMapping
+    @PostMapping("/sign_up")
     public ResponseResult register(@RequestBody User user,
                                    @RequestParam("email_code") String emailCode,
                                    @RequestParam("captcha_code") String captchaCode,
                                    @RequestParam("captcha_key") String captchaKey,
                                    HttpServletRequest request) {
-
         return userService.register(user, emailCode, captchaCode, captchaKey, request);
     }
 
@@ -62,7 +65,7 @@ public class UserApi {
      * @param user
      * @return
      */
-    @PostMapping("/{captcha}/{captcha_key}")
+    @PostMapping("/sign_in/{captcha}/{captcha_key}")
     public ResponseResult login(@PathVariable("captcha") String captcha,
                                 @PathVariable("captcha_key") String captchaKey,
                                 @RequestBody User user,
@@ -78,13 +81,8 @@ public class UserApi {
      * @return
      */
     @GetMapping("/captcha")
-    public void getCaptcha(HttpServletResponse response, @RequestParam("captcha_key") String captchaKey) {
-        try {
+    public void getCaptcha(HttpServletResponse response, @RequestParam("captcha_key") String captchaKey) throws Exception {
             userService.createCaptcha(response, captchaKey);
-        } catch (Exception e) {
-            log.error(e.toString());
-        }
-
     }
 
     /**
@@ -102,13 +100,13 @@ public class UserApi {
      * @param userId
      * @return
      */
-    @GetMapping("/{userId}")
+    @GetMapping("/user_info/{userId}")
     public ResponseResult getUserInfo(@PathVariable("userId") String userId) {
         return userService.getUserInfo(userId);
     }
 
     /**
-     * 修改用户信息
+     * 更新用户信息
      * 1.头像
      * 2.用户名
      * 3.密码（单独修改）
@@ -118,10 +116,49 @@ public class UserApi {
      * @param user
      * @return
      */
-    @PutMapping("/{userId}")
+    @PutMapping("/user_info/{userId}")
     public ResponseResult updateUserInfo(@PathVariable("userId") String userId, @RequestBody User user) {
-//        return userService.updateUserInfo(userId, user);
-        return null;
+        return userService.updateUserInfo(userId, user);
+    }
+
+    /**
+     * 删除用户
+     * @param userId
+     * @return
+     */
+    @PreAuthorize("@permission.admin()")
+    @DeleteMapping("/{userId}")
+    public ResponseResult deleteUser(@PathVariable("userId") String userId) {
+        return userService.deleteUserById(userId);
+    }
+
+    /**
+     * 获取用户列表
+     * 权限：管理员
+     * @param page
+     * @param size
+     * @return
+     */
+    @GetMapping("/list")
+    public ResponseResult listUser(@RequestParam("page") int page, @RequestParam("size") int size) {
+        return userService.listUser(page, size);    }
+
+    /**
+     * 修改密码
+     * 普通修改：通过旧密码对比来更新密码
+     * 找回密码：发送验证码到邮箱/手机进行找回密码
+     * 步骤：
+     * 1、用户填写邮箱
+     * 2、用户获取验证码type=forget
+     * 3、填写验证码
+     * 4、填写新的密码
+     * 5、提交数据（数据包括：邮箱和新密码、验证码）
+     * @param user
+     * @return
+     */
+    @PutMapping("/password/{verifyCode}")
+    public ResponseResult updatePassword(@PathVariable("verifyCode") String verifyCode, @RequestBody User user) {
+        return userService.updateUserPassword(verifyCode, user);
     }
 
     /**
@@ -129,10 +166,71 @@ public class UserApi {
      * @param email
      * @return SUCCESS --> 已经注册
      */
+    @ApiResponses({
+            @ApiResponse(code = 200, message = "表示当前邮箱已经注册了"),
+            @ApiResponse(code = 400, message = "表示当前邮箱未注册")
+    })
     @GetMapping("/email")
     public ResponseResult checkEmail(@RequestParam("email") String email) {
         return userService.checkEmail(email);
     }
+
+    /**
+     * 检查用户是否注册
+     * @param userName
+     * @return
+     */
+    @ApiResponses({
+            @ApiResponse(code = 200, message = "表示用户名已经注册了"),
+            @ApiResponse(code = 400, message = "表示用户名未注册")
+    })
+    @GetMapping("/user_name")
+    public ResponseResult checkUserName(@RequestParam("userName") String userName) {
+        return userService.checkUserName(userName);
+    }
+
+    /**
+     * 更新邮箱
+     * <p>
+     * 条件：
+     * 1、必须已经登录
+     * 2、新的邮箱没有注册过
+     * <p>
+     * 步骤：
+     * 1、已经登录
+     * 2、输入新的邮箱地址
+     * 3、获取验证码type = update
+     * 4、输入验证码
+     * 5、提交数据
+     * </p>
+     * 需要提交的数据：
+     * 1、新的邮箱地址
+     * 2、验证码
+     * 3、其他信息（可从token里获取）
+     * @param email
+     * @param verifyCode
+     * @return
+     */
+    @PutMapping("/email")
+    public ResponseResult updateEmail(@RequestParam("email") String email,
+                                      @RequestParam("verify_code") String verifyCode) {
+        return userService.updateEmail(email, verifyCode);
+    }
+
+    /**
+     * 退出登录
+     * 拿到token_kye
+     * > 删除redis里对应的token
+     * > 删除mysql里对应的refreshToken
+     * > 删除cookie里的token
+     * @return
+     */
+    @GetMapping("/logout")
+    public ResponseResult logout() {
+        return userService.doLogout();
+    }
+
+
 
 
 

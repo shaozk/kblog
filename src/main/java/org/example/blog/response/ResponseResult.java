@@ -26,8 +26,20 @@ public class ResponseResult {
         return responseResult;
     }
 
+    public static ResponseResult ACCOUNT_NOT_LOGIN() {
+        return new ResponseResult(ResponseState.ACCOUNT_NOT_LOGIN);
+    }
+
+    public static ResponseResult PERMISSION_DENIED() {
+        return new ResponseResult(ResponseState.PERMISSION_DENIED);
+    }
+
     public static ResponseResult FAILED() {
         return new ResponseResult(ResponseState.FAILED);
+    }
+
+    public static ResponseResult ACCOUNT_FORBID() {
+        return new ResponseResult(ResponseState.ACCOUNT_FORBID);
     }
 
     public static ResponseResult FAILED(String message) {
@@ -36,12 +48,26 @@ public class ResponseResult {
         return responseResult;
     }
 
+    public static ResponseResult ERROR_404() {
+        return new ResponseResult(ResponseState.ERROR_404);
+    }
+
+    public static ResponseResult ERROR_403() {
+        return new ResponseResult(ResponseState.ERROR_403);
+    }
+
+    public static ResponseResult ERROR_504() {
+        return new ResponseResult(ResponseState.ERROR_504);
+    }
+
+    public static ResponseResult ERROR_505() {
+        return new ResponseResult(ResponseState.ERROR_505);
+    }
+
 
     public boolean isSuccess() {
         return success;
     }
-
-
 
     public void setSuccess(boolean success) {
         this.success = success;
@@ -63,7 +89,7 @@ public class ResponseResult {
         this.message = message;
     }
 
-    public Object getDat() {
+    public Object getData() {
         return data;
     }
 

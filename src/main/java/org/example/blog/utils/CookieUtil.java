@@ -31,11 +31,10 @@ public class CookieUtil{
 
     /**
      * 删除cookie
-     * @param request
      * @param response
      * @param key
      */
-    public static void deleteCookie(HttpServletRequest request, HttpServletResponse response, String key) {
+    public static void deleteCookie(HttpServletResponse response, String key) {
         setUpCookie(response, key, null, 0);
 
     }
