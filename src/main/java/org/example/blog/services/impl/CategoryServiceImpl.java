@@ -85,7 +85,7 @@ public class CategoryServiceImpl implements ICategoryService {
 
     @Override
     public ResponseResult deleteCategory(String categoryId) {
-        int result = categoryDao.deleteCategoryByUpdateStatus(categoryId);
+        int result = categoryDao.deleteCategoryByUpdateState(categoryId);
         if (result == 0) {
             return ResponseResult.FAILED("分类不存在");
         }

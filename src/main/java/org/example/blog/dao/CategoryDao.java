@@ -21,6 +21,6 @@ public interface CategoryDao  extends JpaRepository<Category, String>, JpaSpecif
      * @return
      */
     @Modifying
-    @Query(nativeQuery = true, value = "update `tb_categories` set `status` = '0' where `id` = ?")
-    int deleteCategoryByUpdateStatus(String categoryId);
+    @Query(nativeQuery = true, value = "update `tb_categories` set `state` = '0' where `id` = ?")
+    int deleteCategoryByUpdateState(String categoryId);
 }

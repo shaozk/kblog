@@ -1367,7 +1367,7 @@
       <DataType>varchar(1024)|0s</DataType>
       <NotNull>1</NotNull>
     </column>
-    <column id="401" parent="342" name="order">
+    <column id="401" parent="342" name="order_">
       <Position>5</Position>
       <Comment>顺序</Comment>
       <DataType>int(11)|0s</DataType>
