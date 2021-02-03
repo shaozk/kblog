@@ -18,7 +18,7 @@ public class CategoryAdminApi {
     private ICategoryService categoryService;
 
     /**
-     * 添加分类
+     * 添加文章分类
      * 需要管理员权限
      * @param category
      * @return
@@ -30,18 +30,41 @@ public class CategoryAdminApi {
     }
 
     /**
-     * 删除分类
+     * 获取文章分类
+     * @param categoryId
+     * @return
+     */
+    @GetMapping("/{categoryId}")
+    public ResponseResult getCategory(@PathVariable("categoryId") String categoryId) {
+        return categoryService.getCategory(categoryId);
+    }
+
+    /**
+     * 获取文章分类列表
+     * @param page
+     * @param size
+     * @return
+     */
+    @PreAuthorize("@permission.admin()")
+    @GetMapping("/list/{page}/{size}")
+    public ResponseResult listCategories(@PathVariable("page") int page, @PathVariable("size") int size) {
+        return categoryService.listCategories(page, size);
+    }
+
+    /**
+     * 删除文章分类
      *
      * @param categoryId
      * @return
      */
+    @PreAuthorize("@permission.admin()")
     @DeleteMapping("/{categoryId}")
     public ResponseResult deleteCategory(@PathVariable("categoryId") String categoryId) {
-        return null;
+        return categoryService.deleteCategory(categoryId);
     }
 
     /**
-     * 更新分类
+     * 更新文章分类
      *
      * @param categoryId
      * @param category
@@ -49,29 +72,11 @@ public class CategoryAdminApi {
      */
     @PutMapping("/{categoryId}")
     public ResponseResult updateCategory(@PathVariable("categoryId") String categoryId, @RequestBody Category category ) {
-        return null;
+        return categoryService.updateCategory(categoryId, category);
     }
 
 
-    /**
-     * 获取分类
-     * @param categoryId
-     * @return
-     */
-    @GetMapping("/{categoryId}")
-    public ResponseResult getCategory(@PathVariable("categoryId") String categoryId) {
-        return null;
-    }
 
-    /**
-     * 获取分类列表
-     * @param page
-     * @param size
-     * @return
-     */
-    @GetMapping("/list")
-    public ResponseResult listCategory(@PathVariable("page") int page, @PathVariable("size") int size) {
-        return null;
-    }
+
 
 }
