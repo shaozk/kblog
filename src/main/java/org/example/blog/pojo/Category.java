@@ -4,9 +4,10 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.Table;
+import java.util.Date;
 
 @Entity
-@Table(name = "tb_Categories")
+@Table(name = "tb_categories")
 public class Category {
 
   	@Id
@@ -17,15 +18,14 @@ public class Category {
 	private String pinyin;
   	@Column(name = "description")
 	private String description;
-  	@Column(name = "order")
-	private long order;
+  	@Column(name = "order_")
+	private long order = 1;
   	@Column(name = "status")
 	private String status;
   	@Column(name = "create_time")
-	private java.sql.Timestamp createTime;
+	private Date createTime;
   	@Column(name = "update_time")
-	private java.sql.Timestamp updateTime;
-
+	private Date updateTime;
 
 	public String getId() {
 		return id;
@@ -80,22 +80,19 @@ public class Category {
  		this.status = status;
  	}
 
-
-	public java.sql.Timestamp getCreateTime() {
+	public Date getCreateTime() {
 		return createTime;
 	}
 
- 	public void setCreateTime(java.sql.Timestamp createTime) {
- 		this.createTime = createTime;
- 	}
+	public void setCreateTime(Date createTime) {
+		this.createTime = createTime;
+	}
 
-
-	public java.sql.Timestamp getUpdateTime() {
+	public Date getUpdateTime() {
 		return updateTime;
 	}
 
- 	public void setUpdateTime(java.sql.Timestamp updateTime) {
- 		this.updateTime = updateTime;
- 	}
-
+	public void setUpdateTime(Date updateTime) {
+		this.updateTime = updateTime;
+	}
 }

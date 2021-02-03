@@ -2,6 +2,9 @@ package org.example.blog.controller.admin;
 
 import org.example.blog.pojo.Category;
 import org.example.blog.response.ResponseResult;
+import org.example.blog.services.ICategoryService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 /**
@@ -11,16 +14,19 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/admin/category")
 public class CategoryAdminApi {
 
+    @Autowired
+    private ICategoryService categoryService;
 
     /**
      * 添加分类
-     *
+     * 需要管理员权限
      * @param category
      * @return
      */
+    @PreAuthorize("@permission.admin()")
     @PostMapping
     public ResponseResult addCategory(@RequestBody Category category) {
-        return null;
+        return categoryService.addCategory(category);
     }
 
     /**

@@ -5,7 +5,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/admin/web_size_info")
-public class WebSizeInfo {
+public class WebSizeAdminInfo {
 
     @GetMapping("/title")
     public ResponseResult getWebSizeTitle() {
