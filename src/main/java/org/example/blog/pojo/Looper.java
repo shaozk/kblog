@@ -4,16 +4,17 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.Table;
+import java.util.Date;
 
 @Entity
-@Table(name = "tb_Looper")
+@Table(name = "tb_looper")
 public class Looper {
 
   	@Id
 	private String id;
   	@Column(name = "title")
 	private String title;
-  	@Column(name = "order")
+  	@Column(name = "order_")
 	private long order;
   	@Column(name = "state")
 	private String state;
@@ -22,10 +23,25 @@ public class Looper {
   	@Column(name = "image_url")
 	private String imageUrl;
   	@Column(name = "create_time")
-	private java.sql.Timestamp createTime;
+	private Date createTime;
   	@Column(name = "update_time")
-	private java.sql.Timestamp updateTime;
+	private Date updateTime;
 
+	public Date getCreateTime() {
+		return createTime;
+	}
+
+	public void setCreateTime(Date createTime) {
+		this.createTime = createTime;
+	}
+
+	public Date getUpdateTime() {
+		return updateTime;
+	}
+
+	public void setUpdateTime(Date updateTime) {
+		this.updateTime = updateTime;
+	}
 
 	public String getId() {
 		return id;
@@ -81,21 +97,5 @@ public class Looper {
  	}
 
 
-	public java.sql.Timestamp getCreateTime() {
-		return createTime;
-	}
-
- 	public void setCreateTime(java.sql.Timestamp createTime) {
- 		this.createTime = createTime;
- 	}
-
-
-	public java.sql.Timestamp getUpdateTime() {
-		return updateTime;
-	}
-
- 	public void setUpdateTime(java.sql.Timestamp updateTime) {
- 		this.updateTime = updateTime;
- 	}
 
 }

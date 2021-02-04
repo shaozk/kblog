@@ -2,7 +2,10 @@ package org.example.blog.services.impl;
 
 import org.example.blog.utils.Constants;
 
+
 public class BaseService {
+
+
     /**
      * 页面数
      * @param page
