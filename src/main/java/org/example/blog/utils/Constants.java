@@ -24,6 +24,19 @@ public interface Constants {
         String KEY_TOKEN = "key_token_";
     }
 
+    /**
+     * 图片类型
+     */
+    interface ImageType {
+        String PREFIX = "image/";
+        String TYPE_JPG = "jpg";
+        String TYPE_PNG = "png";
+        String TYPE_GIF = "gif";
+        String TYPE_JPG_WITH_PREFIX = PREFIX + "jpg";
+        String TYPE_PNG_WITH_PREFIX = PREFIX + "png";
+        String TYPE_GIF_WITH_PREFIX = PREFIX + "gif";
+    }
+
     interface Setting {
         String HAS_MANAGER_ACCOUNT_STATE = "has_manager_account_state";
 
@@ -31,6 +44,7 @@ public interface Constants {
 
     interface Page {
         int DEFAULT_PAGE = 1;
+        int DEFAULT_SIZE = 10;
         int MIN_SIZE = 10;
     }
 

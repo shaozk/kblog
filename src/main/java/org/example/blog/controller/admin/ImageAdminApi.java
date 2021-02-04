@@ -25,26 +25,26 @@ public class ImageAdminApi {
     @PreAuthorize("@permission.admin()")
     @DeleteMapping("/{imageId}")
     public ResponseResult deleteImage(@PathVariable("imageId") String imageId) {
-        return null;
+        return imageService.deleteImageById(imageId);
     }
 
     @PreAuthorize("@permission.admin()")
     @PutMapping("/{imageId}")
     public ResponseResult updateImage(@PathVariable("imageId") String imageId) {
+        //TODO:
         return null;
     }
 
     @PreAuthorize("@permission.admin()")
     @GetMapping("/{imageId}")
-    public ResponseResult getImage(HttpServletResponse response, @PathVariable("imageId") String imageId) {
+    public void getImage(HttpServletResponse response, @PathVariable("imageId") String imageId) {
         imageService.viewImage(response, imageId);
-        return null;
     }
 
     @PreAuthorize("@permission.admin()")
-    @GetMapping("/list")
+    @GetMapping("/list/{page}/{size}")
     public ResponseResult listImages(@PathVariable("page") int page, @PathVariable("size") int size) {
-        return null;
+        return imageService.listImages(page, size);
     }
 
 

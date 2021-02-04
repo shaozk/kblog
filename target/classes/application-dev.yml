@@ -15,5 +15,4 @@ spring:
 server:
   port: 2021
 k.blog.image.save-path: E:\Code\J2EE\images
-# 2MB
-k.blog.image.max-size: 2097152
+

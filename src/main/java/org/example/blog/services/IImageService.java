@@ -14,11 +14,25 @@ public interface IImageService {
      */
     ResponseResult uploadImage(MultipartFile file);
 
-
     /**
      * 获取图片
      * @param imageId
      * @return
      */
     void viewImage(HttpServletResponse response, String imageId);
+
+    /**
+     * 获取图片列表
+     * @param page
+     * @param size
+     * @return
+     */
+    ResponseResult listImages(int page, int size);
+
+    /**
+     * 删除图片
+     * @param imageId
+     * @return
+     */
+    ResponseResult deleteImageById(String imageId);
 }
