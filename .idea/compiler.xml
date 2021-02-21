@@ -9,6 +9,7 @@
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
         <module name="KBlogDemo" />
+        <module name="kblog" />
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel target="8" />
@@ -16,6 +17,7 @@
   <component name="JavacSettings">
     <option name="ADDITIONAL_OPTIONS_OVERRIDE">
       <module name="KBlogDemo" options="-parameters" />
+      <module name="kblog" options="-parameters" />
     </option>
   </component>
 </project>
