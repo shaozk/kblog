@@ -2,14 +2,20 @@ package org.example.blog.controller.admin;
 
 import org.example.blog.pojo.Article;
 import org.example.blog.response.ResponseResult;
+import org.example.blog.services.IArticleService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/admin/article")
 public class ArticleAdminApi {
+
+    @Autowired
+    private IArticleService articleService;
+
     @PostMapping
     public ResponseResult postArticle(@RequestBody Article article) {
-        return null;
+        return articleService.postArticle(article);
     }
 
     @DeleteMapping("/{articleId}")

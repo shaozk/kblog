@@ -64,5 +64,14 @@ public interface Constants {
         int YEAR = 12 * MONTH;
     }
 
+    /**
+     * 文章
+     */
+    interface Article {
+        int TITLE_MAX_LENGTH = 128;
+        int SUMMARY_MAX_LENGTH = 256;
+
+    }
+
 
 }

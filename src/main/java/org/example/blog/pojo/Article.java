@@ -4,11 +4,11 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.Table;
+import java.util.Date;
 
 @Entity
-@Table(name = "tb_Article")
+@Table(name = "tb_article")
 public class Article {
-
   	@Id
 	private String id;
   	@Column(name = "title")
@@ -23,20 +23,22 @@ public class Article {
 	private String categoryId;
   	@Column(name = "content")
 	private String content;
+  	// 0表示文本，1表示markdown
   	@Column(name = "type")
 	private String type;
+  	// 0表示删除、1表示已经发布、2表示草稿、3表示置顶
   	@Column(name = "state")
-	private String state;
+	private String state = "1";
   	@Column(name = "summary")
 	private String summary;
   	@Column(name = "labels")
 	private String labels;
   	@Column(name = "view_count")
-	private long viewCount;
+	private long viewCount = 0;
   	@Column(name = "create_time")
-	private java.sql.Timestamp createTime;
+	private Date createTime;
   	@Column(name = "update_time")
-	private java.sql.Timestamp updateTime;
+	private Date updateTime;
 
 
 	public String getId() {
@@ -147,21 +149,19 @@ public class Article {
  	}
 
 
-	public java.sql.Timestamp getCreateTime() {
+	public Date getCreateTime() {
 		return createTime;
 	}
 
- 	public void setCreateTime(java.sql.Timestamp createTime) {
- 		this.createTime = createTime;
- 	}
+	public void setCreateTime(Date createTime) {
+		this.createTime = createTime;
+	}
 
-
-	public java.sql.Timestamp getUpdateTime() {
+	public Date getUpdateTime() {
 		return updateTime;
 	}
 
- 	public void setUpdateTime(java.sql.Timestamp updateTime) {
- 		this.updateTime = updateTime;
- 	}
-
+	public void setUpdateTime(Date updateTime) {
+		this.updateTime = updateTime;
+	}
 }
